@@ -1,1 +1,1 @@
-# SNM-Project-Template
+# STUDENT-NOTES-MANAGEMENT
