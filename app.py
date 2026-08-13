@@ -22,6 +22,7 @@ def getConnectionWithDB():
     except:
         return 'Connection Failed'
 
+
 def insertUserRecord(user_data):
     name=user_data['name']
     email=user_data['email']
@@ -30,12 +31,92 @@ def insertUserRecord(user_data):
     if connection=='Connection Failed':
         return False
     else:
+        try:
+            cursor=connection.cursor()
+            cursor.execute("INSERT INTO users(name,email,password_hash) VALUES(%s,%s,%s)",(name,email,password_hash))
+            connection.commit()
+            cursor.close()
+            connection.close()
+            return True
+        except:
+            print("Data can't be inserted !!")
+            return False
+
+
+def readUserRecords():
+    connection=getConnectionWithDB()
+    if connection=='Connection Failed':
+        return False
+    else:
         cursor=connection.cursor()
-        cursor.execute("INSERT INTO users(name,email,password_hash) VALUES(%s,%s,%s)",(name,email,password_hash))
-        connection.commit()
+        cursor.execute("SELECT * FROM USERS")
+        data=cursor.fetchall()      # data if iterator object
+        records=[]
+        for record in data:
+            temp={}
+            temp['id']=record[0]
+            temp['name']=record[1]
+            temp['email']=record[2]
+            temp['password_hash']=record[3]
+            temp['is_verified']=record[4]
+            temp['created_at']=record[5]
+            records.append(temp)
         cursor.close()
         connection.close()
-        return True
-    
-data={'name':'smily','email':'xxxx@gmail.com','password_hash':'123erfghy65e4w3qasdftre43213456tgf'}
-print(insertUserRecord(data))
+        return records
+
+
+def readUserRecordByEmail(user_data):
+    email=user_data['email']
+    connection=getConnectionWithDB()
+    if connection=='Connection Failed':
+        return False
+    else:
+        cursor=connection.cursor()
+        cursor.execute("SELECT * FROM USERS where email =%s",(email,))
+        data=cursor.fetchone()      
+        try:
+            record = {
+                'id': data[0],
+                'name': data[1],
+                'email': data[2],
+                'password_hash': data[3],
+                'is_verified': data[4],
+                'created_at': data[5]
+            }
+            cursor.close()
+            connection.close()
+            return record
+        except:
+            cursor.close()
+            connection.close()
+            return 'No record founded'
+
+def readUserRecordById(user_data):
+    id=user_data['id']
+    connection=getConnectionWithDB()
+    if connection=='Connection Failed':
+        return False
+    else:
+        cursor=connection.cursor()
+        cursor.execute("SELECT * FROM USERS where id =%s",(id,))
+        data=cursor.fetchone()      
+        try:
+            record = {
+                'id': data[0],
+                'name': data[1],
+                'email': data[2],
+                'password_hash': data[3],
+                'is_verified': data[4],
+                'created_at': data[5]
+                }
+            cursor.close()
+            connection.close()
+            return record
+        except:
+            cursor.close()
+            connection.close()
+            return 'No record founded'
+
+user_data={"id": 2}
+print(readUserRecordById(user_data))
