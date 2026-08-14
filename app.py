@@ -1,5 +1,6 @@
 from config import Config
 import mysql.connector as sql
+import random
 
 DBConfig=Config()
 
@@ -118,5 +119,91 @@ def readUserRecordById(user_data):
             connection.close()
             return 'No record founded'
 
-user_data={"id": 2}
-print(readUserRecordById(user_data))
+
+def updateNameByIdorEmail(user_data):
+    query_filter=''
+    try:
+        id=user_data['id']
+        query_filter='id'
+    except:
+        email=user_data['email']
+        query_filter='email'
+    new_name=user_data['new_name']
+    connection=getConnectionWithDB()
+    if connection=='Connection Failed':
+        return False
+    else:
+        cursor=connection.cursor()
+        if query_filter=='id':
+            query="UPDATE users SET name= %s WHERE id=%s"
+            values=(new_name,id)
+        elif query_filter=="email":
+            query="UPDATE users SET name= %s WHERE email=%s"
+            values=(new_name,email)
+        cursor.execute(query,values)
+        connection.commit()
+        cursor.close()
+        connection.close()
+        return True
+
+
+def updatePasswordByIdorEmail(user_data):
+    query_filter=''
+    try:
+        id=user_data['id']
+        query_filter='id'
+    except:
+        email=user_data['email']
+        query_filter='email'
+    new_password=user_data['new_password']
+    connection=getConnectionWithDB()
+    if connection=='Connection Failed':
+        return False
+    else:
+        cursor=connection.cursor()
+        if query_filter=='id':
+            query="UPDATE users SET password_hash= %s WHERE id=%s"
+            values=(new_password,id)
+        elif query_filter=="email":
+            query="UPDATE users SET password_hash= %s WHERE email=%s"
+            values=(new_password,email)
+        cursor.execute(query,values)
+        connection.commit()
+        cursor.close()
+        connection.close()
+        return True
+
+
+def updateIsverifiedByIdorEmail(user_data):
+    query_filter=''
+    try:
+        id=user_data['id']
+        query_filter='id'
+    except:
+        email=user_data['email']
+        query_filter='email'
+    is_verified=user_data['is_verified']
+    connection=getConnectionWithDB()
+    if connection=='Connection Failed':
+        return False
+    else:
+        cursor=connection.cursor()
+        if query_filter=='id':
+            query="UPDATE users SET is_verified= %s WHERE id=%s"
+            values=(is_verified,id)
+        elif query_filter=="email":
+            query="UPDATE users SET is_verified= %s WHERE email=%s"
+            values=(is_verified,email)
+        cursor.execute(query,values)
+        connection.commit()
+        cursor.close()
+        connection.close()
+        return True
+
+
+def generateOTP():
+    otp=random.randint(1000,9999)
+    return otp
+
+def sendOTPviaEmail(user_data):
+    pass
