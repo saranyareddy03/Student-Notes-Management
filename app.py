@@ -1,8 +1,16 @@
 from config import Config
 import mysql.connector as sql
 import random
+import smtplib
+from email.message import EmailMessage
+from flask import Flask,render_template,url_for,request,redirect
+
+app=Flask(__name__)
 
 DBConfig=Config()
+
+from_email=DBConfig.from_email
+email_app_password=DBConfig.email_app_password
 
 def getConnectionWithDB():
     db_host=DBConfig.db_host
@@ -92,6 +100,7 @@ def readUserRecordByEmail(user_data):
             cursor.close()
             connection.close()
             return 'No record founded'
+
 
 def readUserRecordById(user_data):
     id=user_data['id']
@@ -205,5 +214,72 @@ def generateOTP():
     otp=random.randint(1000,9999)
     return otp
 
-def sendOTPviaEmail(user_data):
-    pass
+
+def sendOTPviaEmail(to_email,otp):
+    message = EmailMessage()
+    message['Subject'] = 'OTP Notification'
+    message['From'] = from_email
+    message['To'] = to_email
+    message.set_content(
+        f"Your OTP is {otp}"
+    )
+    with smtplib.SMTP("smtp.gmail.com",587) as server:   # here with operater does is: whaterver obj is creaetd within the block the object destroys automatically 
+        server.starttls()
+        server.login(from_email,email_app_password)
+        server.send_message(message)
+    return True
+
+
+def validateData(user_data):
+    errors=[]
+    name=user_data['name']
+    email=user_data['email']
+    password=user_data['password']
+    confirm_password=user_data['confirm_password']
+    if name is None or len(name)<2:
+            errors.append('Invalid Name')
+    if email is None or len(email)<5:
+        errors.append('Invalid Email')
+    if password is None or len(password)<5:
+            errors.append('Invalid Password')
+    if confirm_password is None or len(confirm_password)<5:
+        errors.append('Invalid Confirm Password')
+    if password!=confirm_password:
+        errors.append('Passwords not matched')
+    return errors
+
+
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+@app.route('/register',methods=['GET','POST'])
+def register():
+    return render_template('register.html')
+
+@app.route('/login')
+def login():
+    return render_template('login.html')
+
+@app.route('/dashboard')
+def dashboard():
+    if request.method=='GET':
+        return render_template('dashboard.html')
+    elif request.method=='POST':
+        name=request.form['name']
+        email=request.form['email']
+        password=request.form['password']
+        confirm_password=request.form['confirm_password']
+        user_data={
+            "name":name,
+            "email":email,
+            "password":password,
+            "confirm_password":confirm_password
+            }        
+        errors=validateData(user_data)
+        return render_template('register.html',errors=errors)
+
+
+
+if(__name__=="__main__"):
+    app.run(host='0.0.0.0',port=5000,debug=True)
