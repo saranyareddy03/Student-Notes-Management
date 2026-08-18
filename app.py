@@ -4,6 +4,7 @@ import random
 import smtplib
 from email.message import EmailMessage
 from flask import Flask,render_template,url_for,request,redirect
+import bcrypt
 
 app=Flask(__name__)
 
@@ -99,7 +100,7 @@ def readUserRecordByEmail(user_data):
         except:
             cursor.close()
             connection.close()
-            return 'No record founded'
+            return 'No record'
 
 
 def readUserRecordById(user_data):
@@ -230,7 +231,7 @@ def sendOTPviaEmail(to_email,otp):
     return True
 
 
-def validateData(user_data):
+def validateDataForRegister(user_data):
     errors=[]
     name=user_data['name']
     email=user_data['email']
@@ -249,36 +250,74 @@ def validateData(user_data):
     return errors
 
 
+def verifyDuplicateEmail(user_data):
+    record=readUserRecordByEmail(user_data)
+    if (record=='No record'):
+        return False # no duplicate
+    else:
+        return True # duplicate found
+    
+
+#encode - str to bytes
+#decode - bytes to str
+#gensalt is used to generate a key
+#how many times this key should iterate - gensalt(4) 4 times
+#cipher_text is the return value of hashpw 
+def generateHash(text):
+    btext=text.encode('utf-8')
+    cipher_text=bcrypt.hashpw(btext,bcrypt.gensalt(4))
+    return cipher_text.decode('utf-8')
+    print(cipher_text,len(cipher_text))
+
+
 @app.route('/')
 def home():
     return render_template('index.html')
 
 @app.route('/register',methods=['GET','POST'])
 def register():
-    return render_template('register.html')
-
+    if request.method=='GET':
+        return render_template('register.html')
+    elif request.method=='POST':
+            name=request.form['name']
+            email=request.form['email']
+            password=request.form['password']
+            confirm_password=request.form['confirm_password']
+            user_data={
+                "name":name,
+                "email":email,
+                "password":password,
+                "confirm_password":confirm_password
+                }        
+            errors=validateDataForRegister(user_data)
+            if errors:
+                return render_template('register.html',errors=errors)
+            else:
+                is_duplicate=verifyDuplicateEmail(user_data)
+                if is_duplicate==False:
+                    password_hash=generateHash(user_data['password'])
+                    name=user_data['name']
+                    email=user_data['email']
+                    status = insertUserRecord({
+                    "name": name,
+                    "email": email,
+                    "password_hash": password_hash
+                })
+                    if status==True:
+                        return render_template('register.html',res="Registration Successfully Completed!!!")
+                    else:
+                        return render_template('register.html',err='Registration failed')
+                
+                else:
+                    return render_template('register.html',err="Account already exists")
+                
 @app.route('/login')
 def login():
     return render_template('login.html')
 
 @app.route('/dashboard')
 def dashboard():
-    if request.method=='GET':
         return render_template('dashboard.html')
-    elif request.method=='POST':
-        name=request.form['name']
-        email=request.form['email']
-        password=request.form['password']
-        confirm_password=request.form['confirm_password']
-        user_data={
-            "name":name,
-            "email":email,
-            "password":password,
-            "confirm_password":confirm_password
-            }        
-        errors=validateData(user_data)
-        return render_template('register.html',errors=errors)
-
 
 
 if(__name__=="__main__"):
