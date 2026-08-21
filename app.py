@@ -3,15 +3,17 @@ import mysql.connector as sql
 import random
 import smtplib
 from email.message import EmailMessage
-from flask import Flask,render_template,url_for,request,redirect
+from flask import Flask,render_template,url_for,request,redirect,session
 import bcrypt
 
 app=Flask(__name__)
+app.secret_key="Smily@03"
 
 DBConfig=Config()
 
 from_email=DBConfig.from_email
 email_app_password=DBConfig.email_app_password
+
 
 def getConnectionWithDB():
     db_host=DBConfig.db_host
@@ -274,6 +276,7 @@ def generateHash(text):
 def home():
     return render_template('index.html')
 
+
 @app.route('/register',methods=['GET','POST'])
 def register():
     if request.method=='GET':
@@ -295,6 +298,7 @@ def register():
             else:
                 is_duplicate=verifyDuplicateEmail(user_data)
                 if is_duplicate==False:
+                    OTP=generateOTP()
                     password_hash=generateHash(user_data['password'])
                     name=user_data['name']
                     email=user_data['email']
@@ -303,21 +307,48 @@ def register():
                     "email": email,
                     "password_hash": password_hash
                 })
-                    if status==True:
-                        return render_template('register.html',res="Registration Successfully Completed!!!")
+                    if status == True:
+                        session['username']=email 
+                        session['otp']=OTP  
+                        sendOTPviaEmail(email,OTP)
+                        # return render_template('register.html', res = 'Registration Successfully Completed')
+                        return redirect('/verify')
                     else:
                         return render_template('register.html',err='Registration failed')
                 
                 else:
                     return render_template('register.html',err="Account already exists")
+
                 
-@app.route('/login')
+@app.route('/login',methods=['GET','POST'])
 def login():
-    return render_template('login.html')
+    if request.method=='GET':
+        return render_template('login.html')
+    elif request.method=='POST':
+        email=request.form['email']
+        password=request.form['password']
+
 
 @app.route('/dashboard')
 def dashboard():
         return render_template('dashboard.html')
+
+
+@app.route('/verify',methods=['GET','POST'])
+def verify():
+    global OTP
+    if request.method == 'GET':
+        return render_template('verify.html')
+    elif (request.method == 'POST'):
+        otp = request.form['otp']
+        otp = int(otp)
+        if otp == session['otp']:
+            is_verify = True
+            updateIsverifiedByIdorEmail({'email':session['username'],'is_verified':is_verify})
+            return redirect('/login')
+        else:
+            return render_template('verify.html',err="Invalid OTP")
+
 
 
 if(__name__=="__main__"):
