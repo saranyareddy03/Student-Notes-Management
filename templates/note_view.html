@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}
+View Note - SNS
+{% endblock %}
+
+{% block content %}
+<div class="add-note-container">
+    {% if note %}
+        <h1>{{ note.title }}</h1>
+        <p>{{ note.content }}</p>
+        <p><small>Created at: {{ note.created_at }}</small></p>
+
+        <div class="note-actions">
+            <a href="/notes/{{ note.id }}/edit" class="btn btn-edit">Edit</a>
+
+            <form method="POST" action="/notes/{{ note.id }}/delete" style="display:inline;">
+                <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
+        </div>
+    {% else %}
+        <p style="color:red;">{{ err }}</p>
+    {% endif %}
+</div>
+{% endblock %}

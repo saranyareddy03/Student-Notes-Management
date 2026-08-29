@@ -3,6 +3,11 @@
 {% block title %}
 Verify - SNS
 {% endblock %}
+{% block navmenu %}
+ <a href="{{ url_for('home') }}">Home</a>
+            <a href="{{ url_for('register') }}">Register</a>
+            <a href="{{ url_for('login') }}">Login</a>
+            {% endblock %}
 
 {% block content %}
 <div class="form-container">

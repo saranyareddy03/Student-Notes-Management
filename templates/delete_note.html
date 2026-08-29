@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}
+Delete Note - SNS
+{% endblock %}
+
+{% block content %}
+<div class="add-note-container">
+    <h1>Delete Note</h1>
+
+    {% if note %}
+        <p>Are you sure you want to delete <strong>{{ note.title }}</strong>?</p>
+
+        <form method="POST" action="/notes/{{ note.id }}/delete">
+            <button type="submit" class="btn btn-danger">Yes, Delete</button>
+            <a href="/notes" class="btn btn-secondary">Cancel</a>
+        </form>
+    {% else %}
+        <p style="color:red;">{{ err }}</p>
+    {% endif %}
+</div>
+{% endblock %}

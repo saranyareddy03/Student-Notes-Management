@@ -24,13 +24,13 @@
     <div class="container navbar">
 
         <h2 class="logo">
-            SNS
+            STUDENT NOTES MANAGEMENT
         </h2>
 
         <nav>
-            <a href="{{ url_for('home') }}">Home</a>
-            <a href="{{ url_for('register') }}">Register</a>
-            <a href="{{ url_for('login') }}">Login</a>
+           
+            {% block navmenu %}
+            {% endblock %}
         </nav>
 
     </div>

@@ -4,7 +4,11 @@
 {% block title %}
 Dashboard - SNS
 {% endblock %}
+{% block navmenu %}
+<a href="{{ url_for('profile') }}">Profile</a>
+<a href="{{ url_for('logout') }}">Logout</a>
 
+            {% endblock %}
 
 {% block content %}
 
@@ -13,7 +17,7 @@ Dashboard - SNS
     <div>
 
         <h1>
-            Welcome, {{ username }}
+            Welcome {{ username }},
         </h1>
 
         <p>

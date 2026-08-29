@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}
+Profile - SNS
+{% endblock %}
+
+{% block content %}
+<section class="profile-page">
+
+    <div class="profile-header">
+        <h1>My Profile</h1>
+       
+    </div>
+
+    <div class="profile-card">
+        <div class="profile-avatar">
+            {{ user.name[0].upper() if user.name else "?" }}
+        </div>
+
+        <table class="profile-table">
+            <tr>
+                <th>Name</th>
+                <td>{{ user.name }}</td>
+            </tr>
+            <tr>
+                <th>Email</th>
+                <td>{{ user.email }}</td>
+            </tr>
+            <tr>
+                <th>Account Status</th>
+                <td>
+                    {% if user.is_verified %}
+                        <span class="verified">Verified</span>
+                    {% else %}
+                        <span class="not-verified">Not Verified</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>Joined On</th>
+                <td>{{ user.created_at.strftime('%d %b %Y') }}</td>
+            </tr>
+        </table>
+
+        <div class="profile-actions">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">← Back to Dashboard</a>
+        </div>
+    </div>
+</section>
+{% endblock %}
