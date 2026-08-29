@@ -20,38 +20,27 @@
 <body>
 
 <header class="main-header">
-
     <div class="container navbar">
-
         <h2 class="logo">
             STUDENT NOTES MANAGEMENT
         </h2>
 
         <nav>
-           
             {% block navmenu %}
             {% endblock %}
         </nav>
-
     </div>
-
 </header>
 
-
-<main class="container">
-
+<main class="container main-content">
     {% block content %}
     {% endblock %}
-
 </main>
 
-
 <footer class="footer">
-
     <p>
         Student Notes System | Codegnan
     </p>
-
 </footer>
 
 </body>

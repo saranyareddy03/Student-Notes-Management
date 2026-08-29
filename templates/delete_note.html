@@ -4,19 +4,53 @@
 Delete Note - SNS
 {% endblock %}
 
+{% block navmenu %}
+<a href="{{ url_for('my_notes') }}">My Notes</a>
+<a href="{{ url_for('dashboard') }}">Dashboard</a>
+{% endblock %}
+
 {% block content %}
-<div class="add-note-container">
-    <h1>Delete Note</h1>
+<div class="confirmation-container">
 
     {% if note %}
-        <p>Are you sure you want to delete <strong>{{ note.title }}</strong>?</p>
+        <div class="confirmation-icon">!</div>
 
-        <form method="POST" action="/notes/{{ note.id }}/delete">
-            <button type="submit" class="btn btn-danger">Yes, Delete</button>
-            <a href="/notes" class="btn btn-secondary">Cancel</a>
-        </form>
+        <h1>Delete Note?</h1>
+
+        <p>
+            Are you sure you want to delete
+            <strong>{{ note.title }}</strong>?
+        </p>
+
+        <p class="confirmation-warning">
+            This action cannot be undone.
+        </p>
+
+        {% if err %}
+            <p class="form-error">{{ err }}</p>
+        {% endif %}
+
+        <div class="confirmation-actions">
+            <a href="{{ url_for('my_notes') }}"
+               class="btn btn-secondary">
+                Cancel
+            </a>
+
+            <form method="POST"
+                  action="{{ url_for('delete_note', note_id=note.id) }}">
+                <button type="submit" class="btn btn-danger">
+                    Yes, Delete
+                </button>
+            </form>
+        </div>
+
     {% else %}
-        <p style="color:red;">{{ err }}</p>
+        <p class="form-error">{{ err }}</p>
+        <a href="{{ url_for('my_notes') }}"
+           class="btn btn-secondary">
+            Back to My Notes
+        </a>
     {% endif %}
+
 </div>
 {% endblock %}

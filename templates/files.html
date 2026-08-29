@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}
+Files - SNS
+{% endblock %}
+
+{% block navmenu %}
+<a href="{{ url_for('dashboard') }}">Dashboard</a>
+<a href="{{ url_for('my_notes') }}">My Notes</a>
+<a href="{{ url_for('profile') }}">Profile</a>
+<a href="{{ url_for('logout') }}">Logout</a>
+{% endblock %}
+
+{% block content %}
+<div class="files-page">
+    <div class="page-header">
+        <div>
+            <h1>My Files</h1>
+            <p>Manage your uploaded study files.</p>
+        </div>
+    </div>
+
+    <div class="empty-state">
+        <h2>No Files Yet</h2>
+        <p>File upload functionality can be added here without affecting your notes.</p>
+    </div>
+</div>
+{% endblock %}

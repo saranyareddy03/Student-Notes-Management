@@ -4,25 +4,50 @@
 Add Note - SNS
 {% endblock %}
 
+{% block navmenu %}
+<a href="{{ url_for('my_notes') }}">My Notes</a>
+<a href="{{ url_for('dashboard') }}">Dashboard</a>
+{% endblock %}
+
 {% block content %}
 <div class="add-note-container">
     <h1>Add a New Note</h1>
-    <form method="POST" action="/notes/add" class="add-note-form">
+
+    {% if err %}
+        <p class="form-error">{{ err }}</p>
+    {% endif %}
+
+    <form method="POST"
+          action="{{ url_for('add_note') }}"
+          class="add-note-form">
+
         <div class="form-group">
             <label for="title">Title</label>
-            <input type="text" id="title" name="title" required>
+            <input type="text"
+                   id="title"
+                   name="title"
+                   placeholder="Enter note title"
+                   required>
         </div>
 
         <div class="form-group">
             <label for="content">Content</label>
-            <textarea id="content" name="content" rows="6" required></textarea>
+            <textarea id="content"
+                      name="content"
+                      rows="12"
+                      placeholder="Write your note here...&#10;&#10;Example:&#10;• First point&#10;• Second point&#10;• Third point"
+                      required></textarea>
+            
         </div>
 
-        <button type="submit">Save Note</button>
+        <div class="form-actions">
+            <a href="{{ url_for('my_notes') }}" class="btn btn-secondary">
+                Cancel
+            </a>
+            <button type="submit" class="btn btn-primary">
+                Save Note
+            </button>
+        </div>
     </form>
 </div>
-
-{% if err %}
-    <p style="color:red;">{{ err }}</p>
-{% endif %}
 {% endblock %}
