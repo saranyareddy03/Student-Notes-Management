@@ -631,6 +631,13 @@ body {
     line-height: 1.7;
 }
 
+.note-view-content {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+.note-preview {
+    white-space: pre-wrap;
+}
 .note-view-container {
     max-width: 850px;
     margin: 50px auto;

@@ -29,9 +29,9 @@ My Notes - SNS
     <div class="note-card">
         <h3>{{ note.title }}</h3>
 
-        <div class="note-content">
-            {{ note.content }}
-        </div>
+        <p class="note-preview">
+    {{ note.content[:100] }}{% if note.content|length > 100 %}...{% endif %}
+</p>
 
         <div class="note-actions">
             <a href="{{ url_for('view_note', note_id=note.id) }}"

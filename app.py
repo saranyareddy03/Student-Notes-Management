@@ -318,7 +318,7 @@ def readNotesByUserId(user_data):
     connection = getConnectionWithDB()
 
     if connection == 'Connection Failed':
-        return []
+        return False
 
     try:
         cursor = connection.cursor()
@@ -381,7 +381,7 @@ def getNoteById(note_id, user_id):
     connection = getConnectionWithDB()
 
     if connection == 'Connection Failed':
-        return None
+        return False
 
     try:
         cursor = connection.cursor()
@@ -639,15 +639,8 @@ def forgot_password():
                 msg="Password reset link sent to your email"
             )
 
-        return render_template(
-            'forgot_password.html',
-            err="Unable to send the email"
-        )
-
-    return render_template(
-        'forgot_password.html',
-        err="Enter a valid registered email"
-    )
+        return render_template('forgot_password.html',err="Unable to send the email")
+    return render_template('forgot_password.html',err="Enter a valid registered email")
 
 
 @app.route('/reset-password/<string:token>', methods=['GET', 'POST'])
@@ -655,16 +648,10 @@ def reset_password(token):
     token_status = validateToken(token=token)
 
     if token_status == 'Invalid':
-        return render_template(
-            'forgot_password.html',
-            err="Invalid URL"
-        )
+        return render_template('forgot_password.html',err="Invalid URL")
 
     if token_status == 'Timeout':
-        return render_template(
-            'forgot_password.html',
-            err="URL Expired"
-        )
+        return render_template('forgot_password.html',err="URL Expired")
 
     email = token_status
 
@@ -675,25 +662,15 @@ def reset_password(token):
     confirm_password = request.form.get('confirm_password')
 
     if new_password != confirm_password:
-        return render_template(
-            'reset_password.html',
-            err="Password Mismatch"
-        )
+        return render_template('reset_password.html',err="Password Mismatch")
 
     password_hash = generateHash(text=new_password)
 
-    update = updatePasswordByIdorEmail({
-        'email': email,
-        'new_password': password_hash
-    })
+    update = updatePasswordByIdorEmail({'email': email,'new_password': password_hash})
 
     if update:
         return redirect('/login')
-
-    return render_template(
-        'reset_password.html',
-        err="Password update failed"
-    )
+    return render_template('reset_password.html',err="Password update failed")
 
 
 # -------------------------
@@ -705,14 +682,9 @@ def my_notes():
     if "id" not in session:
         return redirect('/login')
 
-    notes = readNotesByUserId({
-        "user_id": session['id']
-    })
+    notes = readNotesByUserId({"user_id": session['id']})
 
-    return render_template(
-        "notes.html",
-        notes=notes
-    )
+    return render_template("notes.html",notes=notes)
 
 
 @app.route('/notes/add', methods=['GET', 'POST'])
@@ -727,10 +699,7 @@ def add_note():
     content = request.form.get('content', '')
 
     if not title or not content.strip():
-        return render_template(
-            'add_note.html',
-            err="Title and content are required."
-        )
+        return render_template('add_note.html',err="Title and content are required.")
 
     status = insertNote({
         "user_id": session['id'],
@@ -741,10 +710,7 @@ def add_note():
     if status:
         return redirect('/notes')
 
-    return render_template(
-        'add_note.html',
-        err="Failed to add note"
-    )
+    return render_template('add_note.html', err="Failed to add note")
 
 
 @app.route('/notes/<int:note_id>')
@@ -758,15 +724,9 @@ def view_note(note_id):
     )
 
     if not note:
-        return render_template(
-            "note_view.html",
-            err="Note not found"
-        )
+        return render_template("note_view.html",err="Note not found")
 
-    return render_template(
-        "note_view.html",
-        note=note
-    )
+    return render_template("note_view.html",note=note)
 
 
 @app.route('/notes/<int:note_id>/edit', methods=['GET', 'POST'])
@@ -780,16 +740,10 @@ def edit_note(note_id):
     )
 
     if not note:
-        return render_template(
-            "edit_note.html",
-            err="Note not found"
-        )
+        return render_template("edit_note.html",err="Note not found")
 
     if request.method == 'GET':
-        return render_template(
-            "edit_note.html",
-            note=note
-        )
+        return render_template("edit_note.html",note=note)
 
     title = request.form.get('title', '').strip()
     content = request.form.get('content', '')
@@ -808,11 +762,7 @@ def edit_note(note_id):
     connection = getConnectionWithDB()
 
     if connection == 'Connection Failed':
-        return render_template(
-            "edit_note.html",
-            note=note,
-            err="Database connection failed"
-        )
+        return render_template("edit_note.html",note=note,err="Database connection failed")
 
     try:
         cursor = connection.cursor()
@@ -833,11 +783,7 @@ def edit_note(note_id):
     except Exception as e:
         connection.rollback()
         print("Error updating note:", e)
-        return render_template(
-            "edit_note.html",
-            note=note,
-            err="Failed to update note"
-        )
+        return render_template("edit_note.html",note=note,err="Failed to update note")
     finally:
         cursor.close()
         connection.close()
