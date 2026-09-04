@@ -1,28 +1,133 @@
 {% extends "base.html" %}
 
 {% block title %}
-Files - SNS
-{% endblock %}
-
-{% block navmenu %}
-<a href="{{ url_for('dashboard') }}">Dashboard</a>
-<a href="{{ url_for('my_notes') }}">My Notes</a>
-<a href="{{ url_for('profile') }}">Profile</a>
-<a href="{{ url_for('logout') }}">Logout</a>
+My Files - SNS
 {% endblock %}
 
 {% block content %}
-<div class="files-page">
-    <div class="page-header">
-        <div>
-            <h1>My Files</h1>
-            <p>Manage your uploaded study files.</p>
+
+<section class="page-header">
+
+
+<div>
+    <h1>My Files</h1>
+    <p>Manage your uploaded files.</p>
+</div>
+
+<a href="{{ url_for('uploadFile') }}" class="btn btn-primary">
+    Add File
+</a>
+
+
+</section>
+
+<!-- Flash Messages -->
+
+<div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+
+    {% if messages %}
+
+        <div class="file-messages">
+
+            {% for category, message in messages %}
+
+                {% if category == "msg" %}
+
+                    <div class="file-alert success-alert">
+                        {{ message }}
+                    </div>
+
+                {% elif category == "err" %}
+
+                    <div class="file-alert error-alert">
+                        {{ message }}
+                    </div>
+
+                {% endif %}
+
+            {% endfor %}
+
         </div>
+
+    {% endif %}
+
+{% endwith %}
+
+</div>
+
+<!-- Files Section -->
+
+<section>
+
+
+{% if files %}
+
+    <div class="files-grid">
+
+        {% for file in files %}
+
+            <div class="file-card">
+
+                <h3>
+                    {{ file.original_name }}
+                </h3>
+
+                <p>
+                    Type: {{ file.mime_type }}
+                </p>
+
+                <p>
+                    Size: {{ file.size_bytes }} bytes
+                </p>
+
+                <div class="note-actions">
+
+                    <a
+                        href="{{ url_for('viewFile', file_id=file.id) }}"
+                        class="btn btn-secondary"
+                    >
+                        View
+                    </a>
+
+                    <a
+                        href="{{ url_for('downloadFile', file_id=file.id) }}"
+                        class="btn btn-edit"
+                    >
+                        Download
+                    </a>
+
+                    <a
+                        href="{{ url_for('deleteFile', file_id=file.id) }}"
+                        class="btn btn-danger"
+                    >
+                        Delete
+                    </a>
+
+                </div>
+
+            </div>
+
+        {% endfor %}
+
     </div>
 
+{% else %}
+
     <div class="empty-state">
-        <h2>No Files Yet</h2>
-        <p>File upload functionality can be added here without affecting your notes.</p>
+
+        <h2>No Files Found</h2>
+
+        <p>
+            You haven't uploaded any files yet.
+        </p>
+
     </div>
-</div>
+
+{% endif %}
+
+
+</section>
+
 {% endblock %}

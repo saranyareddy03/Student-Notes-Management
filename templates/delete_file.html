@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}
+Delete File - SNS
+{% endblock %}
+
+{% block navmenu %} <a href="{{ url_for('files') }}">My Files</a> <a href="{{ url_for('dashboard') }}">Dashboard</a>
+{% endblock %}
+
+{% block content %}
+
+<div class="note-view-container">
+
+
+<div class="note-view-header">
+
+    <h1>Delete File</h1>
+
+    <p>
+        Are you sure you want to delete
+        <strong>{{ file.original_name }}</strong>?
+    </p>
+
+</div>
+
+<div class="note-actions">
+
+    <form method="POST"
+          action="{{ url_for('deleteFile', file_id=file.id) }}"
+          style="display:inline;">
+
+        <button type="submit"
+                class="btn btn-danger">
+            Yes, Delete
+        </button>
+
+    </form>
+
+    <a href="{{ url_for('files') }}"
+       class="btn btn-secondary">
+        Cancel
+    </a>
+
+</div>
+
+
+</div>
+
+{% endblock %}

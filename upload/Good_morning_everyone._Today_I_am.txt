@@ -1,0 +1,20 @@
+STACK:
+
+A linear data structure that follows LIFO (Last In, First Out) principle.
+
+push(x) → Add element x to the top
+
+pop() → Remove and return the top element
+
+peek()/top() → View the top element without removing
+
+isEmpty() → Check if the stack has no elements it returns true otherwise false
+
+size() → Return the number of elements in the stack
+
+
+LINKED LIST
+
+A linear data structure which contains 2 parts has data and reference of the next node.
+
+GREEDY APPROACH

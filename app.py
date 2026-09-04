@@ -4,7 +4,9 @@ import random
 import os
 import smtplib
 from email.message import EmailMessage
-from flask import Flask,render_template,url_for,request,redirect,session
+from flask import Flask,render_template,url_for,request,redirect,session,flash,send_file
+from werkzeug.utils import secure_filename
+import sys
 import bcrypt
 from itsdangerous import URLSafeTimedSerializer,BadSignature,TimedSerializer
 
@@ -428,6 +430,162 @@ def getTotalNotes(user_id):
         connection.close()
 
 
+def getTotalFiles(user_id):
+    connection = getConnectionWithDB()
+
+    if connection == 'Connection Failed':
+        return 0
+
+    try:
+        cursor = connection.cursor()
+
+        cursor.execute(
+            "SELECT COUNT(*) FROM file_data WHERE user_id=%s",
+            (user_id,)
+        )
+
+        return cursor.fetchone()[0]
+
+    finally:
+        cursor.close()
+        connection.close()
+
+# check file exist in allowed types
+def checkFileAllowed(filename):
+    allow_types = [
+        'pdf', 'doc', 'docx',
+        'jpeg', 'jpg', 'png',
+        'svg', 'csv', 'xml', 'txt'
+    ]
+
+    if "." in filename:
+        extension = filename.rsplit(".", 1)[1].lower()
+        return extension in allow_types
+
+    return False
+
+
+# check duplicate file
+def checkFileDuplicate(userid, filename):
+    try:
+        connection = getConnectionWithDB()
+
+        if connection == 'Connection Failed':
+            return False, "Database connection Failed"
+        cursor = connection.cursor()
+
+        query = """ SELECT id FROM file_data WHERE stored_name = %s AND user_id = %s"""
+
+        cursor.execute(query, (filename, userid))
+        record = cursor.fetchone()
+        cursor.close()
+        connection.close()
+
+        if record:
+            return False, "Duplicate File"
+
+        return True, "Not Duplicate File"
+
+    except Exception as e:
+        return False, f"Exception raised in checking duplicate file: {e}"
+
+# insert file into table 
+# delete notes by id
+def UploadFileInDB(userid, filename, stored_name, file_type, file_size, file_path):
+    try:
+        connection = getConnectionWithDB()
+
+        if connection == 'Connection Failed':
+            return False, "Database connection Failed"
+
+        cursor = connection.cursor()
+
+        query = """
+            INSERT INTO file_data
+            (
+                user_id,
+                original_name,
+                stored_name,
+                mime_type,
+                size_bytes,
+                storage_path
+            )
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """
+
+        cursor.execute(
+            query,
+            ( userid,filename, stored_name, file_type, file_size,file_path)
+        )
+
+        connection.commit()
+
+        cursor.close()
+        connection.close()
+
+        return True, "File Uploaded Successfully"
+
+    except Exception as e:
+        return False, f"Exception raised while uploading file: {e}"
+
+
+def GetAllFilesbyUserid(userid):
+    try:
+        connection = getConnectionWithDB()
+
+        if connection == 'Connection Failed':
+            return False, "Database connection Failed"
+
+        cursor = connection.cursor(dictionary=True)
+
+        query = """
+            SELECT *
+            FROM file_data
+            WHERE user_id = %s
+        """
+
+        cursor.execute(query, (userid,))
+        files = cursor.fetchall()
+
+        cursor.close()
+        connection.close()
+
+        return True, files
+
+    except Exception as e:
+        return False, f"Exception raised in reading Files: {e}"
+
+    
+def GetFilesbyUserid(userid, fileid):
+    try:
+        connection = getConnectionWithDB()
+
+        if connection == 'Connection Failed':
+            return False, "Database connection Failed"
+
+        cursor = connection.cursor(dictionary=True)
+
+        query = """
+            SELECT *
+            FROM file_data
+            WHERE id = %s
+            AND user_id = %s
+        """
+
+        cursor.execute(query, (fileid, userid))
+        file = cursor.fetchone()
+
+        cursor.close()
+        connection.close()
+
+        if file:
+            return True, file
+
+        return False, "File not found"
+
+    except Exception as e:
+        return False, f"Exception raised in viewing file: {e}"
+
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -533,28 +691,107 @@ def login():
 
 @app.route('/dashboard')
 def dashboard():
+
     if "id" not in session:
         return redirect('/login')
 
-    user_id = session['id']
-    username = session['username']
+    userid = session['id']
+    username = session.get('username', '')
 
-    notes = readNotesByUserId({"user_id": user_id})
-    total_notes = len(notes)
+    try:
+        connection = getConnectionWithDB()
 
-    # File management can be added independently without changing notes.
-    # For now the dashboard safely displays zero uploaded files.
-    total_files = 0
+        if connection == 'Connection Failed':
+            flash("Database connection failed", "err")
 
-    return render_template(
-        'dashboard.html',
-        username=username,
-        notes=notes[:6],
-        total_notes=total_notes,
-        total_files=total_files
-    )
+            return render_template(
+                'dashboard.html',
+                username=username,
+                total_notes=0,
+                total_files=0,
+                notes=[]
+            )
+
+        cursor = connection.cursor(dictionary=True)
+
+        # -----------------------------
+        # TOTAL NOTES
+        # -----------------------------
+        cursor.execute(
+            """
+            SELECT COUNT(*) AS total_notes
+            FROM notes
+            WHERE user_id = %s
+            """,
+            (userid,)
+        )
+
+        note_count = cursor.fetchone()
+        total_notes = note_count['total_notes']
 
 
+        # -----------------------------
+        # TOTAL FILES
+        # -----------------------------
+        cursor.execute(
+            """
+            SELECT COUNT(*) AS total_files
+            FROM file_data
+            WHERE user_id = %s
+            """,
+            (userid,)
+        )
+
+        file_count = cursor.fetchone()
+        total_files = file_count['total_files']
+
+
+        # -----------------------------
+        # RECENT NOTES
+        # -----------------------------
+        cursor.execute(
+            """
+            SELECT *
+            FROM notes
+            WHERE user_id = %s
+            ORDER BY id DESC
+            LIMIT 5
+            """,
+            (userid,)
+        )
+
+        notes = cursor.fetchall()
+
+
+        cursor.close()
+        connection.close()
+
+
+        return render_template(
+            'dashboard.html',
+            username=username,
+            total_notes=total_notes,
+            total_files=total_files,
+            notes=notes
+        )
+
+
+    except Exception as e:
+
+        print("Dashboard Error:", e)
+
+        flash(
+            f"Dashboard Error: {e}",
+            "err"
+        )
+
+        return render_template(
+            'dashboard.html',
+            username=username,
+            total_notes=0,
+            total_files=0,
+            notes=[]
+        )
 @app.route('/verify', methods=['GET', 'POST'])
 def verify():
     if request.method == 'GET':
@@ -858,8 +1095,230 @@ def files():
     if "id" not in session:
         return redirect('/login')
 
-    return render_template('files.html')
+    userid = session['id']
+    status, files = GetAllFilesbyUserid(userid)
+    if status:
+        return render_template('files.html',files=files)
 
+    flash(files, "err")
+    return render_template('files.html',files=[])
+
+# upload file route
+@app.route('/files/upload', methods=['GET', 'POST'])
+def uploadFile():
+    if "id" not in session:
+        return redirect('/login')
+    # GET request
+    if request.method == 'GET':
+        return render_template('upload_file.html')
+
+    # POST request
+    file = request.files.get('file')
+
+    # Check whether file was selected
+    if not file or file.filename == "":
+        flash("Please select a file", "err")
+        return redirect('/files/upload')
+
+    filename = file.filename
+
+    # Check file extension
+    if not checkFileAllowed(filename):
+        flash("File type not allowed", "err")
+        return redirect('/files/upload')
+
+    # Make filename safe
+    filename_secure = secure_filename(filename)
+
+    # Check duplicate file
+    status, message = checkFileDuplicate(
+        userid=session['id'],
+        filename=filename_secure
+    )
+
+    if status == False:
+        flash(message, "err")
+        return redirect('/files/upload')
+
+    # Create upload folder if it does not exist
+    os.makedirs('upload', exist_ok=True)
+
+    # Physical file path
+    upload_path = os.path.join(
+        'upload',
+        filename_secure
+    )
+
+    # Save file
+    file.save(upload_path)
+
+    # Get file size
+    file_size = os.path.getsize(upload_path)
+
+    # Get file extension
+    file_type = os.path.splitext(
+        filename_secure
+    )[1].lower().lstrip('.')
+
+    # Path stored in database
+    file_path = os.path.abspath(upload_path)
+
+    # Insert file information into database
+    status, msg = UploadFileInDB(
+        userid=session['id'],
+        filename=filename,
+        stored_name=filename_secure,
+        file_type=file_type,
+        file_size=file_size,
+        file_path=file_path
+    )
+
+    if status == True:
+
+        flash(msg, "msg")
+
+        return redirect('/files')
+
+    else:
+
+        # Remove uploaded file if database insertion fails
+        if os.path.exists(upload_path):
+            os.remove(upload_path)
+
+        flash(msg, "err")
+
+        return redirect('/files/upload')
+# view file 
+@app.route('/files/view/<int:file_id>')
+def viewFile(file_id):
+
+    if "id" not in session:
+        return redirect('/login')
+
+    status, file = GetFilesbyUserid(
+        userid=session['id'],
+        fileid=file_id
+    )
+
+    if status == False:
+        flash(file, "err")
+        return redirect('/files')
+
+    file_path = file['storage_path']
+
+    if not os.path.isfile(file_path):
+        flash("File not found on server", "err")
+        return redirect('/files')
+
+    return send_file(
+        file_path,
+        as_attachment=False
+    )
+
+# download file 
+@app.route('/files/download/<int:file_id>')
+def downloadFile(file_id):
+
+    if "id" not in session:
+        return redirect('/login')
+
+    status, file = GetFilesbyUserid(
+        userid=session['id'],
+        fileid=file_id
+    )
+
+    if status == False:
+        flash(file, "err")
+        return redirect('/files')
+
+    file_path = file['storage_path']
+
+    if not os.path.exists(file_path):
+        flash("File not found on server", "err")
+        return redirect('/files')
+
+    return send_file(
+        file_path,
+        as_attachment=True,
+        download_name=file['original_name']
+    )
+
+# Delete file 
+@app.route('/files/delete/<int:file_id>', methods=['GET', 'POST'])
+def deleteFile(file_id):
+
+    if "id" not in session:
+        return redirect('/login')
+
+    # Get file information
+    status, file = GetFilesbyUserid(
+        userid=session['id'],
+        fileid=file_id
+    )
+
+    if status == False:
+        flash(file, "err")
+        return redirect('/files')
+
+    # GET = show confirmation page
+    if request.method == 'GET':
+
+        return render_template(
+            'delete_file.html',
+            file=file
+        )
+
+    # POST = actually delete file
+
+    try:
+
+        connection = getConnectionWithDB()
+
+        if connection == 'Connection Failed':
+            flash("Database connection failed", "err")
+            return redirect('/files')
+
+        cursor = connection.cursor()
+
+        # Physical file path
+        file_path = file['storage_path']
+
+        # Delete physical file
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+        # Delete database record
+        query = """
+            DELETE FROM file_data
+            WHERE id = %s
+            AND user_id = %s
+        """
+
+        cursor.execute(
+            query,
+            (
+                file_id,
+                session['id']
+            )
+        )
+
+        connection.commit()
+
+        cursor.close()
+        connection.close()
+
+        flash("File deleted successfully", "msg")
+
+        return redirect('/files')
+
+    except Exception as e:
+
+        flash(
+            f"Error deleting file: {e}",
+            "err"
+        )
+
+        return redirect('/files')
 
 if __name__ == "__main__":
     app.run(

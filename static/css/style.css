@@ -736,6 +736,125 @@ body {
     display: inline;
 }
 
+
+/* -------------------------
+   Files Page
+-------------------------- */
+
 .files-page {
     padding-bottom: 50px;
+}
+
+/* Files Grid */
+.files-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+    margin-top: 25px;
+}
+
+/* File Card */
+.file-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 22px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid #eeeeee;
+
+    display: flex;
+    flex-direction: column;
+
+    min-height: 180px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.file-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+/* File Name */
+.file-card h3 {
+    margin: 0 0 10px;
+    font-size: 18px;
+    color: #1f2937;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* File Type */
+.file-card p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+/* File Buttons */
+.file-card .note-actions {
+    margin-top: auto;
+    padding-top: 20px;
+
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.file-card .btn {
+    margin: 0;
+    padding: 8px 13px;
+    font-size: 14px;
+}
+
+/* File Messages */
+.file-messages {
+    margin-bottom: 25px;
+}
+
+.file-alert {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.success-alert {
+    color: #155724;
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+}
+
+.error-alert {
+    color: #721c24;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+}
+
+/* Empty Files */
+.files-page .empty-state {
+    margin-top: 30px;
+}
+
+/* Files Responsive */
+@media (max-width: 900px) {
+    .files-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .files-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .file-card .note-actions {
+        flex-direction: column;
+    }
+
+    .file-card .btn {
+        width: 100%;
+        text-align: center;
+    }
 }
